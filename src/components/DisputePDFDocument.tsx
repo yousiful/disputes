@@ -157,25 +157,55 @@ export const DisputePDFDocument = ({ data }: DisputePDFDocumentProps) => (
 
       <View style={styles.infoSection}>
         <View style={styles.infoRow}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>Merchant Name</Text>
             <Text style={styles.value}>{data.merchantName || 'Not Provided'}</Text>
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>Case ID</Text>
             <Text style={styles.value}>{data.caseId || 'Not Provided'}</Text>
           </View>
         </View>
         <View style={styles.infoRow}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>Transaction Date</Text>
             <Text style={styles.value}>{data.transactionDate || 'Not Provided'}</Text>
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>Transaction Amount</Text>
             <Text style={styles.value}>{data.transactionAmount || 'Not Provided'}</Text>
           </View>
         </View>
+        <View style={styles.infoRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>Dispute Reason</Text>
+            <Text style={styles.value}>{data.reasonCode?.replace('_', ' ').toUpperCase() || 'Not Provided'}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>CVV Match</Text>
+            <Text style={styles.value}>{data.cvvMatch || 'Not Provided'}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>AVS Match</Text>
+            <Text style={styles.value}>{data.avsMatch || 'Not Provided'}</Text>
+          </View>
+        </View>
+        {(data.customerIpAddress || data.deviceFingerprint) && (
+          <View style={styles.infoRow}>
+            {data.customerIpAddress && (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Customer IP Address</Text>
+                <Text style={styles.value}>{data.customerIpAddress}</Text>
+              </View>
+            )}
+            {data.deviceFingerprint && (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Device Fingerprint / ID</Text>
+                <Text style={styles.value}>{data.deviceFingerprint}</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       <Text style={styles.sectionNumber}>I. MERCHANT STATEMENT</Text>
@@ -200,7 +230,7 @@ export const DisputePDFDocument = ({ data }: DisputePDFDocumentProps) => (
 
       <View style={styles.divider} />
 
-      <Text style={styles.sectionNumber}>III. SUPPORTING EVIDENCE</Text>
+      <Text style={styles.sectionNumber}>III. COMPELLING EVIDENCE</Text>
 
       <Text style={styles.text}>
         {data.evidence || 'The evidence presented herein conclusively demonstrates that the service was delivered as promised and the client received the full benefit of their purchase.'}

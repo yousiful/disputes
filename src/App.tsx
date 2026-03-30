@@ -17,10 +17,18 @@ function App() {
     request: '',
     description: '',
     proofImages: [],
-    rebuttalTone: 'professional',
+    reasonCode: 'fraudulent',
     refundPolicy: '',
     agreementTimestamp: '',
     loginCount: '',
+    cvvMatch: 'Not Provided',
+    avsMatch: 'Not Provided',
+    customerIpAddress: '',
+    billingZip: '',
+    deviceFingerprint: '',
+    trackingNumber: '',
+    shippingCarrier: '',
+    deliveryDate: '',
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -30,71 +38,54 @@ function App() {
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    const toneStyles = {
-      aggressive: {
-        prefix: 'We must emphatically state that',
-        emphasis: 'This dispute represents a clear case of',
-        conclusion: 'We demand immediate reversal of this fraudulent chargeback.',
-      },
-      professional: {
-        prefix: 'We respectfully submit that',
-        emphasis: 'Our records demonstrate that',
-        conclusion: 'We request that you rule in favor of the merchant based on the evidence provided.',
-      },
-      conciliatory: {
-        prefix: 'We would like to clarify that',
-        emphasis: 'We understand the concern, however our documentation shows that',
-        conclusion: 'We kindly request your consideration in reviewing this matter favorably.',
-      },
-    };
+    let serviceProvided = '';
+    let evidenceText = '';
+    let requestText = '';
 
-    const tone = toneStyles[disputeData.rebuttalTone];
+    const { reasonCode, description, transactionDate, transactionAmount, merchantName, cvvMatch, avsMatch, customerIpAddress, billingZip, deviceFingerprint, trackingNumber, shippingCarrier, deliveryDate, refundPolicy, agreementTimestamp, loginCount, proofImages } = disputeData;
 
-    const serviceProvided = `${tone.prefix} on ${disputeData.transactionDate || '[Transaction Date]'}, a transaction for ${
-      disputeData.transactionAmount || '[Amount]'
-    } was processed with ${disputeData.merchantName || '[Merchant Name]'}. ${disputeData.description}
+    if (reasonCode === 'fraudulent' || reasonCode === 'unrecognized') {
+        serviceProvided = `We respectfully submit that the chargeback claiming "Fraudulent/Unrecognized" (Reason Code 10.4 / 4837) is invalid. On ${transactionDate || '[Date]'}, a legitimate transaction for ${transactionAmount || '[Amount]'} was processed with ${merchantName || '[Merchant]'}. ${description}`;
+        
+        evidenceText = `This transaction is a verified match. The purchaser authenticated the transaction using exact credentials that invalidate the claim of a stolen card:\n\n`;
+        evidenceText += `Security Match: CVV Match is "${cvvMatch}" and AVS Match is "${avsMatch}".\n`;
+        if (customerIpAddress) evidenceText += `Geolocation: The transaction originated from IP Address ${customerIpAddress}.`;
+        if (billingZip) evidenceText += ` (Matching Billing Zip: ${billingZip})\n`; else evidenceText += `\n`;
+        if (deviceFingerprint) evidenceText += `Device Fingerprint: ${deviceFingerprint}.\n`;
+        if (loginCount || trackingNumber) evidenceText += `\nFurthermore, the goods/services were actively consumed or delivered. `;
+        if (trackingNumber) evidenceText += `Shipped via ${shippingCarrier} (Tracking: ${trackingNumber}) and delivered on ${deliveryDate}. `;
+        if (loginCount) evidenceText += `Digital logs confirm the user logged in ${loginCount} times.`;
 
-The client explicitly agreed to our ${disputeData.refundPolicy ? 'clearly stated' : 'non-refundable'} terms${
-      disputeData.agreementTimestamp ? ` at ${disputeData.agreementTimestamp}` : ' at the time of purchase'
-    }. This agreement was presented during checkout and required explicit acceptance to proceed with the transaction.`;
+        requestText = `Based on the Compelling Evidence provided, the cardholder participated in this transaction and is in possession of the goods/services. This constitutes "Friendly Fraud". We demand immediate reversal of this chargeback.`;
 
-    const evidence = `${tone.emphasis} the service was rendered in full accordance with the agreed-upon terms and conditions.
+    } else if (reasonCode === 'not_as_described') {
+        serviceProvided = `We respectfully submit this compelling evidence to counter the claim "Merchandise/Services Not as Described" (Reason Code 13.1 / 4853). The transaction for ${transactionAmount || '[Amount]'} was processed on ${transactionDate || '[Date]'}. ${description}`;
+        
+        evidenceText = `The goods/services were delivered exactly as described at the time of purchase. `;
+        if (refundPolicy) evidenceText += `The client explicitly agreed to our terms: "${refundPolicy}" on ${agreementTimestamp || 'the time of purchase'}.\n\n`;
+        if (trackingNumber) evidenceText += `Physical items were trackably delivered via ${shippingCarrier} (Tracking: ${trackingNumber}) on ${deliveryDate}.\n`;
+        if (loginCount) evidenceText += `Digital service usage logs confirm active engagement (${loginCount} sessions), demonstrating the client received the expected value.\n`;
+        
+        requestText = `The merchant fulfilled all contractual obligations. The cardholder's claims are unsubstantiated by fact. We request immediate resolution in favor of the merchant.`;
 
-${
-  disputeData.loginCount
-    ? `Our records show ${disputeData.loginCount}, confirming active service delivery and demonstrating that the client actively engaged with and received the full benefit of the purchased service.`
-    : 'Our system logs confirm that the client accessed and utilized the service as intended.'
-}
+    } else {
+        serviceProvided = `We submit this formal declaration regarding the disputed transaction for ${transactionAmount || '[Amount]'} processed on ${transactionDate || '[Date]'}. ${description}`;
+        
+        evidenceText = `The transaction was processed correctly and in accordance with our terms of service. `;
+        if (refundPolicy) evidenceText += `Our cancellation/refund policy clearly states: "${refundPolicy}", which the client accepted on ${agreementTimestamp || 'the time of purchase'}.\n`;
+        
+        requestText = `We request that you rule in favor of the merchant based on the provided evidence of authorization and adherence to policy.`;
+    }
 
-${
-  disputeData.proofImages.length > 0
-    ? `We have attached ${disputeData.proofImages.length} supporting exhibit(s) that provide conclusive proof of service delivery, including receipts, signed agreements, access logs, and transaction confirmations.`
-    : 'All communication logs, delivery confirmations, and usage records are available for immediate review upon request.'
-}
-
-This dispute is a case of "Friendly Fraud" as the client remains in full possession of the digital assets, knowledge, or services provided. The client has consumed the service and is now attempting to reverse payment, which constitutes an abuse of the chargeback system.`;
-
-    const request = `Based on the comprehensive evidence presented in this formal declaration, ${tone.conclusion}
-
-The documentation clearly establishes that:
-
-1. The transaction was legitimate and properly authorized by the cardholder
-2. The service was delivered completely and in accordance with stated terms
-3. All contractual obligations were fulfilled by the merchant
-4. The client explicitly agreed to non-refundable terms prior to purchase
-5. The client has actively used and benefited from the service provided
-
-${
-  disputeData.rebuttalTone === 'aggressive'
-    ? 'This chargeback represents an abuse of the payment system and should be reversed immediately to prevent unwarranted financial loss and maintain the integrity of merchant protections.'
-    : 'We believe this dispute was filed in error or without full consideration of the transaction details. We request immediate resolution in favor of the merchant to prevent unwarranted financial loss.'
-}`;
+    if (proofImages.length > 0) {
+        evidenceText += `\n\nWe have attached ${proofImages.length} exhibit(s) providing conclusive proof of service delivery and authorization.`;
+    }
 
     setDisputeData({
       ...disputeData,
       serviceProvided,
-      evidence,
-      request,
+      evidence: evidenceText,
+      request: requestText,
     });
 
     setIsGenerating(false);

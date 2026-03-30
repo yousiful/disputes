@@ -1,3 +1,5 @@
+export type ReasonCode = 'fraudulent' | 'unrecognized' | 'not_as_described' | 'canceled' | 'duplicate';
+
 export interface DisputeData {
   merchantName: string;
   caseId: string;
@@ -8,10 +10,18 @@ export interface DisputeData {
   request: string;
   description: string;
   proofImages: FileWithPreview[];
-  rebuttalTone: 'aggressive' | 'professional' | 'conciliatory';
+  reasonCode: ReasonCode;
   refundPolicy: string;
   agreementTimestamp: string;
   loginCount: string;
+  cvvMatch: 'Y' | 'N' | 'Not Provided';
+  avsMatch: 'Y' | 'N' | 'Partial' | 'Not Provided';
+  customerIpAddress: string;
+  billingZip: string;
+  deviceFingerprint: string;
+  trackingNumber: string;
+  shippingCarrier: string;
+  deliveryDate: string;
 }
 
 export interface FileWithPreview {
