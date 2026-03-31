@@ -1,4 +1,4 @@
-import { Sparkles, Building2, FileText, Shield, Clock, Users, ShieldAlert, Package, MapPin } from 'lucide-react';
+import { Sparkles, Building2, Shield, Clock, Users, ShieldAlert, Package, MapPin } from 'lucide-react';
 import { DisputeData, ReasonCode } from '../types/dispute';
 import { FileUploadZone } from './FileUploadZone';
 import { Button } from './ui/button';
