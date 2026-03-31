@@ -292,9 +292,19 @@ export const DisputeForm = ({ data, onDataChange, onGenerateAI, isGenerating }: 
         </div>
 
         <div>
-          <Label htmlFor="description" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-            TRANSACTION DESCRIPTION
-          </Label>
+          <div className="flex items-center justify-between mb-1.5 md:mb-2">
+            <Label htmlFor="description" className="text-slate-700 text-[10px] md:text-xs font-semibold block">
+              TRANSACTION DESCRIPTION
+            </Label>
+            <button
+              type="button"
+              onClick={() => onDataChange({ ...data, description: "The cardholder actively engaged our company for digital services and explicitly authorized this transaction. The service/product was fully provisioned and delivered as described. The customer successfully accessed the platform, and cryptographic evidence (IP Address, Device ID) confirms their identity and device match the checkout session, strictly contradicting any claims of unauthorized use or non-receipt." })}
+              className="text-[10px] md:text-xs text-violet-600 font-bold hover:text-violet-800 transition-colors bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1 shadow-sm"
+            >
+              <Sparkles className="w-3 h-3" />
+              Use Winning Template
+            </button>
+          </div>
           <Textarea
             id="description"
             value={data.description}
@@ -304,10 +314,20 @@ export const DisputeForm = ({ data, onDataChange, onGenerateAI, isGenerating }: 
           />
         </div>
 
-        <div>
-           <Label htmlFor="refundPolicy" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-             REFUND POLICY
-           </Label>
+         <div>
+           <div className="flex items-center justify-between mb-1.5 md:mb-2">
+             <Label htmlFor="refundPolicy" className="text-slate-700 text-[10px] md:text-xs font-semibold block">
+               REFUND POLICY
+             </Label>
+             <button
+               type="button"
+               onClick={() => onDataChange({ ...data, refundPolicy: "During checkout, the cardholder was required to affirmatively check a box explicitly agreeing to our Terms of Service and Refund Policy before the transaction could be processed. Our policy states: 'All sales are final. Due to the immediate delivery of digital products/services, no refunds will be issued once access has been granted.' A direct link to this policy was prominently displayed, strictly adhering to card network disclosure requirements." })}
+               className="text-[10px] md:text-xs text-violet-600 font-bold hover:text-violet-800 transition-colors bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1 shadow-sm"
+             >
+               <Sparkles className="w-3 h-3" />
+               Use Winning Template
+             </button>
+           </div>
            <Textarea
              id="refundPolicy"
              value={data.refundPolicy}
