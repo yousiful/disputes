@@ -26,9 +26,7 @@ function App() {
     customerIpAddress: '',
     billingZip: '',
     deviceFingerprint: '',
-    trackingNumber: '',
-    shippingCarrier: '',
-    deliveryDate: '',
+    ghlData: null,
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -42,7 +40,7 @@ function App() {
     let evidenceText = '';
     let requestText = '';
 
-    const { reasonCode, description, transactionDate, transactionAmount, merchantName, cvvMatch, avsMatch, customerIpAddress, billingZip, deviceFingerprint, trackingNumber, shippingCarrier, deliveryDate, refundPolicy, agreementTimestamp, loginCount, proofImages } = disputeData;
+    const { reasonCode, description, transactionDate, transactionAmount, merchantName, cvvMatch, avsMatch, customerIpAddress, billingZip, deviceFingerprint, refundPolicy, agreementTimestamp, loginCount, proofImages } = disputeData; 
 
     if (reasonCode === 'fraudulent' || reasonCode === 'unrecognized') {
         serviceProvided = `We respectfully submit that the chargeback claiming "Fraudulent/Unrecognized" (Reason Code 10.4 / 4837) is invalid. On ${transactionDate || '[Date]'}, a legitimate transaction for ${transactionAmount || '[Amount]'} was processed with ${merchantName || '[Merchant]'}. ${description}`;
@@ -52,8 +50,6 @@ function App() {
         if (customerIpAddress) evidenceText += `Geolocation: The transaction originated from IP Address ${customerIpAddress}.`;
         if (billingZip) evidenceText += ` (Matching Billing Zip: ${billingZip})\n`; else evidenceText += `\n`;
         if (deviceFingerprint) evidenceText += `Device Fingerprint: ${deviceFingerprint}.\n`;
-        if (loginCount || trackingNumber) evidenceText += `\nFurthermore, the goods/services were actively consumed or delivered. `;
-        if (trackingNumber) evidenceText += `Shipped via ${shippingCarrier} (Tracking: ${trackingNumber}) and delivered on ${deliveryDate}. `;
         if (loginCount) evidenceText += `Digital logs confirm the user logged in ${loginCount} times.`;
 
         requestText = `Based on the Compelling Evidence provided, the cardholder participated in this transaction and is in possession of the goods/services. This constitutes "Friendly Fraud". We demand immediate reversal of this chargeback.`;
@@ -63,7 +59,6 @@ function App() {
         
         evidenceText = `The goods/services were delivered exactly as described at the time of purchase. `;
         if (refundPolicy) evidenceText += `The client explicitly agreed to our terms: "${refundPolicy}" on ${agreementTimestamp || 'the time of purchase'}.\n\n`;
-        if (trackingNumber) evidenceText += `Physical items were trackably delivered via ${shippingCarrier} (Tracking: ${trackingNumber}) on ${deliveryDate}.\n`;
         if (loginCount) evidenceText += `Digital service usage logs confirm active engagement (${loginCount} sessions), demonstrating the client received the expected value.\n`;
         
         requestText = `The merchant fulfilled all contractual obligations. The cardholder's claims are unsubstantiated by fact. We request immediate resolution in favor of the merchant.`;
@@ -81,6 +76,9 @@ function App() {
         evidenceText += `\n\nWe have attached ${proofImages.length} exhibit(s) providing conclusive proof of service delivery and authorization.`;
     }
 
+    const ghlNote = disputeData.ghlData ? `
+
+CRM Record: GoHighLevel confirms contact created ${new Date(disputeData.ghlData.contact.dateAdded).toLocaleDateString()} with ${disputeData.ghlData.notes.length} note(s) and ${disputeData.ghlData.opportunities.length} pipeline opportunity(ies). Full CRM timeline included in Section IV.` : ""; evidenceText += ghlNote;
     setDisputeData({
       ...disputeData,
       serviceProvided,
@@ -102,7 +100,7 @@ function App() {
               <Shield className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-white" />
               <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse"></div>
             </div>
-            <span className="font-bold text-white text-[10px] md:text-xs lg:text-sm tracking-wide">ChargeGuard AI</span>
+            <span className="font-bold text-white text-[10px] md:text-xs lg:text-sm tracking-wide">Media Traffics | KenjiAI</span>
             <Sparkles className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4 text-white" />
           </div>
           <h1 className="text-base md:text-xl lg:text-2xl xl:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 mb-0.5 md:mb-1 tracking-tight leading-tight px-2">

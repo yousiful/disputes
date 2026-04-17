@@ -1,3 +1,5 @@
+import { GHLData } from '../lib/ghl';
+
 export type ReasonCode = 'fraudulent' | 'unrecognized' | 'not_as_described' | 'canceled' | 'duplicate';
 
 export interface DisputeData {
@@ -19,9 +21,7 @@ export interface DisputeData {
   customerIpAddress: string;
   billingZip: string;
   deviceFingerprint: string;
-  trackingNumber: string;
-  shippingCarrier: string;
-  deliveryDate: string;
+  ghlData: GHLData | null;
 }
 
 export interface FileWithPreview {

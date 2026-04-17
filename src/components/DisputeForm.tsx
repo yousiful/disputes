@@ -1,11 +1,58 @@
-import { Sparkles, Building2, Shield, Clock, Users, ShieldAlert, Package, MapPin } from 'lucide-react';
-import { DisputeData, ReasonCode } from '../types/dispute';
-import { FileUploadZone } from './FileUploadZone';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Sparkles, Building2, Shield, Clock, Users, ShieldAlert, MapPin, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { DisputeData, ReasonCode } from "../types/dispute";
+import { GHLData } from "../lib/ghl";
+import { FileUploadZone } from "./FileUploadZone";
+import { GHLLookup } from "./GHLLookup";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+
+const EVIDENCE_CHECKLIST: Record<ReasonCode, { label: string; key: keyof DisputeData | "ghl" | "images" }[]> = {
+  fraudulent: [
+    { label: "CVV Match confirmed", key: "cvvMatch" },
+    { label: "AVS Match confirmed", key: "avsMatch" },
+    { label: "Customer IP address logged", key: "customerIpAddress" },
+    { label: "Device fingerprint recorded", key: "deviceFingerprint" },
+    { label: "GHL CRM record pulled", key: "ghl" },
+    { label: "Login/usage count documented", key: "loginCount" },
+    { label: "Screenshots/proof uploaded", key: "images" },
+  ],
+  unrecognized: [
+    { label: "CVV Match confirmed", key: "cvvMatch" },
+    { label: "Customer IP address logged", key: "customerIpAddress" },
+    { label: "GHL CRM record pulled", key: "ghl" },
+    { label: "Login/usage count documented", key: "loginCount" },
+    { label: "Screenshots/proof uploaded", key: "images" },
+  ],
+  not_as_described: [
+    { label: "Refund policy stated", key: "refundPolicy" },
+    { label: "ToS agreement timestamp", key: "agreementTimestamp" },
+    { label: "GHL CRM record with notes", key: "ghl" },
+    { label: "Screenshots/proof uploaded", key: "images" },
+    { label: "Login/usage documented", key: "loginCount" },
+  ],
+  canceled: [
+    { label: "Cancellation policy stated", key: "refundPolicy" },
+    { label: "ToS agreement timestamp", key: "agreementTimestamp" },
+    { label: "GHL CRM record pulled", key: "ghl" },
+    { label: "Screenshots/proof uploaded", key: "images" },
+  ],
+  duplicate: [
+    { label: "Transaction date confirmed", key: "transactionDate" },
+    { label: "GHL CRM record pulled", key: "ghl" },
+    { label: "Screenshots/proof uploaded", key: "images" },
+  ],
+};
+function checkItem(key: keyof DisputeData | "ghl" | "images", data: DisputeData): "ok" | "warn" | "missing" {
+  if (key === "ghl") return data.ghlData ? "ok" : "missing";
+  if (key === "images") return data.proofImages.length > 0 ? "ok" : "warn";
+  if (key === "cvvMatch" || key === "avsMatch") return (data[key] as string) !== "Not Provided" ? "ok" : "warn";
+  const val = data[key as keyof DisputeData];
+  if (val === null || val === undefined || val === "") return "missing";
+  return "ok";
+}
 
 interface DisputeFormProps {
   data: DisputeData;
@@ -15,345 +62,122 @@ interface DisputeFormProps {
 }
 
 export const DisputeForm = ({ data, onDataChange, onGenerateAI, isGenerating }: DisputeFormProps) => {
+  const checklist = EVIDENCE_CHECKLIST[data.reasonCode] ?? [];
+  const score = checklist.filter((item) => checkItem(item.key, data) === "ok").length;
+  const total = checklist.length;
+  const scoreColor = score === total ? "text-emerald-600" : score >= total * 0.6 ? "text-amber-600" : "text-red-600";
+
+  const handleGHLData = (ghlData: GHLData) => {
+    onDataChange({ ...data, ghlData, merchantName: data.merchantName || "Media Traffics | KenjiAI" });
+  };
+
   return (
-    <div className="space-y-3 md:space-y-6 lg:space-y-8 w-full">
-      <div className="text-center mb-3 md:mb-4 lg:mb-6">
-        <div className="inline-flex items-center gap-1.5 md:gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2.5 md:px-4 py-1 md:py-2 rounded-full mb-2 md:mb-3 lg:mb-4 shadow-lg">
-          <Shield className="w-3 h-3 md:w-4 md:h-4" />
-          <span className="font-bold text-[10px] md:text-xs lg:text-sm">COMMAND CENTER</span>
+    <div className="space-y-4 w-full">
+      <div className="text-center mb-4">
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-4 py-1.5 rounded-full mb-3 shadow-lg">
+          <Shield className="w-4 h-4" />
+          <span className="font-bold text-xs">DISPUTE COMMAND CENTER</span>
         </div>
-        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-slate-900 mb-1 md:mb-2 px-2">Dispute Evidence Builder</h2>
-        <p className="text-slate-600 text-[11px] md:text-xs lg:text-sm px-2">
-          Compile Compelling Evidence for Card Networks
-        </p>
+        <h2 className="text-xl font-bold text-slate-900 mb-1">Dispute Evidence Builder</h2>
+        <p className="text-slate-600 text-xs">Media Traffics | KenjiAI</p>
       </div>
 
-      <div className="bg-slate-50 rounded-lg md:rounded-xl p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 lg:space-y-6 border border-slate-200">
-        <div className="border-l-3 md:border-l-4 border-cyan-500 pl-2.5 md:pl-3 lg:pl-4">
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-slate-900 mb-0.5 md:mb-1 flex items-center gap-1.5 md:gap-2">
-            <Building2 className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-cyan-600" />
-            Transaction Fundamentals
-          </h3>
-          <p className="text-[10px] md:text-xs text-slate-600">Core transaction details</p>
-        </div>
+      <GHLLookup onDataLoaded={handleGHLData} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="merchantName" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              MERCHANT NAME
-            </Label>
-            <Input
-              id="merchantName"
-              value={data.merchantName}
-              onChange={(e) => onDataChange({ ...data, merchantName: e.target.value })}
-              placeholder="e.g., Acme Corporation"
-              className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="caseId" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              DISPUTE CASE ID
-            </Label>
-            <Input
-              id="caseId"
-              value={data.caseId}
-              onChange={(e) => onDataChange({ ...data, caseId: e.target.value })}
-              placeholder="e.g., CASE-2024-001"
-              className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 h-9 md:h-10 text-sm"
-            />
-          </div>
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-slate-900">Evidence Strength</h3>
+          <span className={`text-sm font-bold ${scoreColor}`}>{score}/{total}</span>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="transactionDate" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              TRANSACTION DATE
-            </Label>
-            <Input
-              id="transactionDate"
-              type="date"
-              value={data.transactionDate}
-              onChange={(e) => onDataChange({ ...data, transactionDate: e.target.value })}
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="transactionAmount" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              TRANSACTION AMOUNT
-            </Label>
-            <Input
-              id="transactionAmount"
-              value={data.transactionAmount}
-              onChange={(e) => onDataChange({ ...data, transactionAmount: e.target.value })}
-              placeholder="e.g., $500.00"
-              className="bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 h-9 md:h-10 text-sm"
-            />
-          </div>
+        <div className="w-full bg-slate-200 rounded-full h-2 mb-3">
+          <div className={`h-2 rounded-full transition-all ${score === total ? "bg-emerald-500" : score >= total * 0.6 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${total > 0 ? (score / total) * 100 : 0}%` }} />
+        </div>
+        <div className="space-y-1">
+          {checklist.map((item) => {
+            const status = checkItem(item.key, data);
+            return (
+              <div key={String(item.key)} className="flex items-center gap-2 text-xs">
+                {status === "ok" ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" /> : status === "warn" ? <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" /> : <XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />}
+                <span className={status === "ok" ? "text-slate-600" : status === "warn" ? "text-amber-700" : "text-red-600"}>{item.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
-
-      <div className="bg-slate-50 rounded-lg md:rounded-xl p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 lg:space-y-6 border border-slate-200">
-        <div className="border-l-3 md:border-l-4 border-emerald-500 pl-2.5 md:pl-3 lg:pl-4">
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-slate-900 mb-0.5 md:mb-1 flex items-center gap-1.5 md:gap-2">
-            <ShieldAlert className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-emerald-600" />
-            Fraud & Security Indicators
-          </h3>
-          <p className="text-[10px] md:text-xs text-slate-600">Cryptographic and Geographic Compelling Evidence</p>
+      <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+        <div className="border-l-4 border-cyan-500 pl-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Building2 className="w-4 h-4 text-cyan-600" />Transaction Details</h3>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="cvvMatch" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              CVV MATCH RESULT
-            </Label>
-            <Select
-              value={data.cvvMatch}
-              onValueChange={(value: any) => onDataChange({ ...data, cvvMatch: value })}
-            >
-              <SelectTrigger className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm">
-                <SelectValue placeholder="Select CVV Match" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Y">Y - Match</SelectItem>
-                <SelectItem value="N">N - No Match</SelectItem>
-                <SelectItem value="Not Provided">Not Provided / bypass</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="avsMatch" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              AVS MATCH RESULT
-            </Label>
-            <Select
-              value={data.avsMatch}
-              onValueChange={(value: any) => onDataChange({ ...data, avsMatch: value })}
-            >
-              <SelectTrigger className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm">
-                <SelectValue placeholder="Select AVS Match" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Y">Y - Full Match</SelectItem>
-                <SelectItem value="Partial">Partial Match</SelectItem>
-                <SelectItem value="N">N - No Match</SelectItem>
-                <SelectItem value="Not Provided">Not Requested</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="billingZip" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              BILLING ZIP CODE
-            </Label>
-            <Input
-              id="billingZip"
-              value={data.billingZip}
-              onChange={(e) => onDataChange({ ...data, billingZip: e.target.value })}
-              placeholder="e.g., 90210"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">MERCHANT NAME</Label><Input value={data.merchantName} onChange={(e) => onDataChange({ ...data, merchantName: e.target.value })} placeholder="Media Traffics | KenjiAI" className="bg-white border-slate-300 h-9 text-sm" /></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">DISPUTE CASE ID</Label><Input value={data.caseId} onChange={(e) => onDataChange({ ...data, caseId: e.target.value })} placeholder="e.g., CASE-2024-001" className="bg-white border-slate-300 h-9 text-sm" /></div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="customerIpAddress" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block flex items-center gap-1.5">
-              <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
-              CUSTOMER IP ADDRESS
-            </Label>
-            <Input
-              id="customerIpAddress"
-              value={data.customerIpAddress}
-              onChange={(e) => onDataChange({ ...data, customerIpAddress: e.target.value })}
-              placeholder="e.g., 192.168.1.1 (Required for digital items)"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="deviceFingerprint" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              DEVICE FINGERPRINT / ID
-            </Label>
-            <Input
-              id="deviceFingerprint"
-              value={data.deviceFingerprint}
-              onChange={(e) => onDataChange({ ...data, deviceFingerprint: e.target.value })}
-              placeholder="e.g., Device Hash or 'MacBook Pro iOS 17'"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">TRANSACTION DATE</Label><Input type="date" value={data.transactionDate} onChange={(e) => onDataChange({ ...data, transactionDate: e.target.value })} className="bg-white border-slate-300 h-9 text-sm" /></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">TRANSACTION AMOUNT</Label><Input value={data.transactionAmount} onChange={(e) => onDataChange({ ...data, transactionAmount: e.target.value })} placeholder="$2,500.00" className="bg-white border-slate-300 h-9 text-sm" /></div>
         </div>
       </div>
-
-      <div className="bg-slate-50 rounded-lg md:rounded-xl p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 lg:space-y-6 border border-slate-200">
-        <div className="border-l-3 md:border-l-4 border-amber-500 pl-2.5 md:pl-3 lg:pl-4">
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-slate-900 mb-0.5 md:mb-1 flex items-center gap-1.5 md:gap-2">
-            <Package className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-amber-600" />
-            Delivery & Fulfillment
-          </h3>
-          <p className="text-[10px] md:text-xs text-slate-600">Proof of service or item delivery</p>
+      <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+        <div className="border-l-4 border-emerald-500 pl-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-emerald-600" />Fraud Indicators</h3>
+          <p className="text-[10px] text-slate-500">Strongest for fraudulent/unrecognized disputes</p>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="trackingNumber" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              TRACKING NUMBER
-            </Label>
-            <Input
-              id="trackingNumber"
-              value={data.trackingNumber}
-              onChange={(e) => onDataChange({ ...data, trackingNumber: e.target.value })}
-              placeholder="e.g., 1Z99999999999"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="shippingCarrier" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              SHIPPING CARRIER
-            </Label>
-            <Input
-              id="shippingCarrier"
-              value={data.shippingCarrier}
-              onChange={(e) => onDataChange({ ...data, shippingCarrier: e.target.value })}
-              placeholder="e.g., UPS/FedEx/USPS"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="deliveryDate" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block">
-              DELIVERY DATE
-            </Label>
-            <Input
-              id="deliveryDate"
-              type="date"
-              value={data.deliveryDate}
-              onChange={(e) => onDataChange({ ...data, deliveryDate: e.target.value })}
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">CVV MATCH</Label><Select value={data.cvvMatch} onValueChange={(v: any) => onDataChange({ ...data, cvvMatch: v })}><SelectTrigger className="bg-white border-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Y">Y - Match</SelectItem><SelectItem value="N">N - No Match</SelectItem><SelectItem value="Not Provided">Not Provided</SelectItem></SelectContent></Select></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">AVS MATCH</Label><Select value={data.avsMatch} onValueChange={(v: any) => onDataChange({ ...data, avsMatch: v })}><SelectTrigger className="bg-white border-slate-300 h-9 text-sm"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Y">Y - Full</SelectItem><SelectItem value="Partial">Partial</SelectItem><SelectItem value="N">N - None</SelectItem><SelectItem value="Not Provided">Not Requested</SelectItem></SelectContent></Select></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">BILLING ZIP</Label><Input value={data.billingZip} onChange={(e) => onDataChange({ ...data, billingZip: e.target.value })} placeholder="90210" className="bg-white border-slate-300 h-9 text-sm" /></div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-3 lg:gap-4">
-          <div>
-            <Label htmlFor="loginCount" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block flex items-center gap-1.5">
-              <Users className="w-2.5 h-2.5 md:w-3 md:h-3" />
-              LOGIN COUNT (Digital Goods)
-            </Label>
-            <Input
-              id="loginCount"
-              value={data.loginCount}
-              onChange={(e) => onDataChange({ ...data, loginCount: e.target.value })}
-              placeholder="e.g., 47 logins"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
-          <div>
-            <Label htmlFor="agreementTimestamp" className="text-slate-700 text-[10px] md:text-xs font-semibold mb-1.5 md:mb-2 block flex items-center gap-1.5">
-              <Clock className="w-2.5 h-2.5 md:w-3 md:h-3" />
-              TOS AGREEMENT TIMESTAMP
-            </Label>
-            <Input
-              id="agreementTimestamp"
-              value={data.agreementTimestamp}
-              onChange={(e) => onDataChange({ ...data, agreementTimestamp: e.target.value })}
-              placeholder="e.g., 2024-01-15 14:30 UTC"
-              className="bg-white border-slate-300 text-slate-900 h-9 md:h-10 text-sm"
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block flex items-center gap-1"><MapPin className="w-3 h-3" />CUSTOMER IP</Label><Input value={data.customerIpAddress} onChange={(e) => onDataChange({ ...data, customerIpAddress: e.target.value })} placeholder="192.168.1.1" className="bg-white border-slate-300 h-9 text-sm" /></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block">DEVICE FINGERPRINT</Label><Input value={data.deviceFingerprint} onChange={(e) => onDataChange({ ...data, deviceFingerprint: e.target.value })} placeholder="Device hash" className="bg-white border-slate-300 h-9 text-sm" /></div>
         </div>
       </div>
-
-      <div className="bg-slate-50 rounded-lg md:rounded-xl p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 lg:space-y-6 border border-slate-200">
-        <div className="border-l-3 md:border-l-4 border-violet-500 pl-2.5 md:pl-3 lg:pl-4">
-          <h3 className="text-sm md:text-base lg:text-lg font-bold text-slate-900 mb-0.5 md:mb-1 flex items-center gap-1.5 md:gap-2">
-            <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-violet-600" />
-            Evidence Synthesis
-          </h3>
-          <p className="text-[10px] md:text-xs text-slate-600">Select Dispute Reason & Format Output</p>
+      <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+        <div className="border-l-4 border-amber-500 pl-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Users className="w-4 h-4 text-amber-600" />Digital Service Delivery</h3>
         </div>
-
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block flex items-center gap-1"><Users className="w-3 h-3" />LOGIN / USAGE COUNT</Label><Input value={data.loginCount} onChange={(e) => onDataChange({ ...data, loginCount: e.target.value })} placeholder="e.g., 14 logins over 3 weeks" className="bg-white border-slate-300 h-9 text-sm" /></div>
+          <div><Label className="text-[10px] font-semibold text-slate-700 mb-1.5 block flex items-center gap-1"><Clock className="w-3 h-3" />TOS TIMESTAMP</Label><Input value={data.agreementTimestamp} onChange={(e) => onDataChange({ ...data, agreementTimestamp: e.target.value })} placeholder="2024-01-15 14:30 UTC" className="bg-white border-slate-300 h-9 text-sm" /></div>
+        </div>
+      </div>
+      <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-200">
+        <div className="border-l-4 border-violet-500 pl-3">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Sparkles className="w-4 h-4 text-violet-600" />Evidence Synthesis</h3>
+        </div>
         <div>
-          <Label htmlFor="reasonCode" className="text-slate-700 text-[10px] md:text-xs font-bold mb-1.5 md:mb-2 block text-violet-700">
-            DISPUTE REASON CODE
-          </Label>
-          <Select
-            value={data.reasonCode}
-            onValueChange={(value: ReasonCode) =>
-              onDataChange({ ...data, reasonCode: value })
-            }
-          >
-            <SelectTrigger className="bg-white border-slate-300 text-slate-900 h-10 md:h-12 text-sm border-2 border-violet-200">
-              <SelectValue placeholder="Select Reason Code" />
-            </SelectTrigger>
+          <Label className="text-[10px] font-bold text-violet-700 mb-1.5 block">DISPUTE REASON CODE</Label>
+          <Select value={data.reasonCode} onValueChange={(v: ReasonCode) => onDataChange({ ...data, reasonCode: v })}>
+            <SelectTrigger className="bg-white border-2 border-violet-200 h-10 text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="fraudulent" className="text-sm font-semibold">10.4 / 4837 - Fraudulent / Unrecognized</SelectItem>
-              <SelectItem value="not_as_described" className="text-sm font-semibold">13.1 / 4853 - Merchandise/Services Not as Described</SelectItem>
-              <SelectItem value="canceled" className="text-sm font-semibold">13.7 / 4841 - Canceled Recurring Transaction</SelectItem>
-              <SelectItem value="duplicate" className="text-sm font-semibold">12.6 / 4834 - Duplicate Processing</SelectItem>
+              <SelectItem value="fraudulent">10.4 / 4837 - Fraudulent / Unrecognized</SelectItem>
+              <SelectItem value="not_as_described">13.1 / 4853 - Not as Described</SelectItem>
+              <SelectItem value="canceled">13.7 / 4841 - Canceled Recurring</SelectItem>
+              <SelectItem value="duplicate">12.6 / 4834 - Duplicate Processing</SelectItem>
             </SelectContent>
           </Select>
         </div>
-
         <div>
-          <div className="flex items-center justify-between mb-1.5 md:mb-2">
-            <Label htmlFor="description" className="text-slate-700 text-[10px] md:text-xs font-semibold block">
-              TRANSACTION DESCRIPTION
-            </Label>
-            <button
-              type="button"
-              onClick={() => onDataChange({ ...data, description: "The cardholder actively engaged our company for digital services and explicitly authorized this transaction. The service/product was fully provisioned and delivered as described. The customer successfully accessed the platform, and cryptographic evidence (IP Address, Device ID) confirms their identity and device match the checkout session, strictly contradicting any claims of unauthorized use or non-receipt." })}
-              className="text-[10px] md:text-xs text-violet-600 font-bold hover:text-violet-800 transition-colors bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1 shadow-sm"
-            >
-              <Sparkles className="w-3 h-3" />
-              Use Winning Template
-            </button>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className="text-[10px] font-semibold text-slate-700 block">TRANSACTION DESCRIPTION</Label>
+            <button type="button" onClick={() => onDataChange({ ...data, description: "The cardholder engaged our company for digital software services and explicitly authorized this transaction. The service was delivered in full, confirmed by CRM records and usage logs." })} className="text-[10px] text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Template</button>
           </div>
-          <Textarea
-            id="description"
-            value={data.description}
-            onChange={(e) => onDataChange({ ...data, description: e.target.value })}
-            placeholder="Describe the transaction and add any specific details on how it was fulfilled..."
-            className="min-h-[80px] md:min-h-[100px] bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm"
-          />
+          <Textarea value={data.description} onChange={(e) => onDataChange({ ...data, description: e.target.value })} placeholder="Describe the service delivered..." className="min-h-[90px] bg-white border-slate-300 text-sm" />
         </div>
-
-         <div>
-           <div className="flex items-center justify-between mb-1.5 md:mb-2">
-             <Label htmlFor="refundPolicy" className="text-slate-700 text-[10px] md:text-xs font-semibold block">
-               REFUND POLICY
-             </Label>
-             <button
-               type="button"
-               onClick={() => onDataChange({ ...data, refundPolicy: "During checkout, the cardholder was required to affirmatively check a box explicitly agreeing to our Terms of Service and Refund Policy before the transaction could be processed. Our policy states: 'All sales are final. Due to the immediate delivery of digital products/services, no refunds will be issued once access has been granted.' A direct link to this policy was prominently displayed, strictly adhering to card network disclosure requirements." })}
-               className="text-[10px] md:text-xs text-violet-600 font-bold hover:text-violet-800 transition-colors bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1 shadow-sm"
-             >
-               <Sparkles className="w-3 h-3" />
-               Use Winning Template
-             </button>
-           </div>
-           <Textarea
-             id="refundPolicy"
-             value={data.refundPolicy}
-             onChange={(e) => onDataChange({ ...data, refundPolicy: e.target.value })}
-             placeholder="Enter your terms & conditions or refund policy that the client agreed to..."
-             className="min-h-[70px] md:min-h-[80px] bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm"
-           />
-         </div>
- 
-         <div>
-           <Label className="text-slate-700 text-[10px] md:text-xs font-semibold mb-2 md:mb-3 block">
-             PROOF IMAGES
-           </Label>
-           <FileUploadZone
-             files={data.proofImages}
-             onFilesChange={(files) => onDataChange({ ...data, proofImages: files })}
-           />
-         </div>
-
-        <Button
-          onClick={onGenerateAI}
-          disabled={isGenerating || !data.description || !data.reasonCode}
-          className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white font-bold py-4 md:py-5 lg:py-6 text-sm md:text-base shadow-xl transition-all duration-300"
-        >
-          <Sparkles className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-          {isGenerating ? 'Synthesizing Compelling Evidence...' : 'Generate Evidence Rebuttal'}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className="text-[10px] font-semibold text-slate-700 block">REFUND / CANCELLATION POLICY</Label>
+            <button type="button" onClick={() => onDataChange({ ...data, refundPolicy: "During checkout, the cardholder was required to check a box explicitly agreeing to our Terms of Service. Our policy states: All sales are final. No refunds will be issued once access has been granted to digital software." })} className="text-[10px] text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded border border-violet-200 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Template</button>
+          </div>
+          <Textarea value={data.refundPolicy} onChange={(e) => onDataChange({ ...data, refundPolicy: e.target.value })} placeholder="Your no-refund policy the client agreed to..." className="min-h-[80px] bg-white border-slate-300 text-sm" />
+        </div>
+        <div>
+          <Label className="text-[10px] font-semibold text-slate-700 mb-2 block">PROOF IMAGES / SCREENSHOTS</Label>
+          <FileUploadZone files={data.proofImages} onFilesChange={(files) => onDataChange({ ...data, proofImages: files })} />
+        </div>
+        <Button onClick={onGenerateAI} disabled={isGenerating || !data.description || !data.reasonCode} className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 text-white font-bold py-5 text-sm shadow-xl">
+          <Sparkles className="w-4 h-4 mr-2" />
+          {isGenerating ? "Synthesizing Evidence..." : "Generate Dispute Response"}
         </Button>
       </div>
     </div>

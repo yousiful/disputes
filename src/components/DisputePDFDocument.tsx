@@ -148,7 +148,7 @@ interface DisputePDFDocumentProps {
 export const DisputePDFDocument = ({ data }: DisputePDFDocumentProps) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      <Text style={styles.watermark}>VERIFIED BY{'\n'}CHARGEGUARD AI</Text>
+      
 
       <View style={styles.header}>
         <Text style={styles.mainTitle}>LEGAL RESPONSE TO DISPUTE</Text>
@@ -275,12 +275,12 @@ export const DisputePDFDocument = ({ data }: DisputePDFDocumentProps) => (
 
       <Text style={styles.declaration}>
         This document constitutes a formal legal response. All information provided is true and accurate.{'\n'}
-        Verified by ChargeGuard AI - Professional Dispute Management System
+        Verified by Media Traffics | KenjiAI - Professional Dispute Management System
       </Text>
 
       <View style={styles.footer}>
         <Text>Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</Text>
-        <Text>ChargeGuard AI © 2024 - All Rights Reserved</Text>
+        <Text>Media Traffics | KenjiAI © 2024 - All Rights Reserved</Text>
       </View>
     </Page>
   </Document>
