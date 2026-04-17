@@ -29,7 +29,7 @@ export const GHLLookup = ({ onDataLoaded }: GHLLookupProps) => {
       setResult(data);
       onDataLoaded(data);
     } catch (e) {
-      setError('Failed to reach GHL. Make sure you are running with: npm run dev');
+      const msg = e instanceof Error ? e.message : String(e); setError('GHL error: ' + msg);
     } finally {
       setLoading(false);
     }

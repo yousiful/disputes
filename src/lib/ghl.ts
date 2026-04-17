@@ -1,4 +1,5 @@
 const LOCATION_ID = 'q5L4ttbBMHNxieXIcTVJ';
+const PROXY_BASE = 'http://localhost:3001';
 
 export interface GHLContact {
   id: string;
@@ -41,8 +42,11 @@ export interface GHLData {
 }
 
 async function ghlFetch(path: string) {
-  const res = await fetch(`/api/ghl${path}`);
-  if (!res.ok) throw new Error(`GHL API error: ${res.status} ${path}`);
+  const res = await fetch(`${PROXY_BASE}${path}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`GHL ${res.status}: ${text.slice(0, 200)}`);
+  }
   return res.json();
 }
 
