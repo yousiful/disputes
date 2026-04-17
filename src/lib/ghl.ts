@@ -1,5 +1,5 @@
 const LOCATION_ID = 'q5L4ttbBMHNxieXIcTVJ';
-const PROXY_BASE = 'http://localhost:3001';
+const PROXY_BASE = '/api/ghl';
 
 export interface GHLContact {
   id: string;
