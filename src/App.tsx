@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { DisputeForm } from './components/DisputeForm';
-import { PDFPreview } from './components/PDFPreview';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { DisputeData } from './types/dispute';
 import { Sparkles, Shield, CheckCircle } from 'lucide-react';
 import './App.css';
+
+// The PDF renderer is ~1.5 MB, so it loads after the form is on screen.
+const PDFPreview = lazy(() =>
+  import('./components/PDFPreview').then((m) => ({ default: m.PDFPreview }))
+);
 
 function App() {
   const [disputeData, setDisputeData] = useState<DisputeData>({
@@ -122,7 +126,9 @@ CRM Record: GoHighLevel confirms contact created ${new Date(disputeData.ghlData.
           </div>
 
           <div className="bg-gradient-to-br from-slate-50/95 to-slate-100/95 backdrop-blur-sm rounded-lg md:rounded-xl lg:rounded-2xl p-2 md:p-4 lg:p-6 border-2 border-slate-200 shadow-xl overflow-hidden max-h-[calc(100vh-200px)] xl:max-h-none">
-            <PDFPreview data={disputeData} />
+            <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading document preview...</div>}>
+              <PDFPreview data={disputeData} />
+            </Suspense>
           </div>
         </div>
 
