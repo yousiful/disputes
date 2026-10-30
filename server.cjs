@@ -9,7 +9,11 @@ const path = require('path');
 
 const PORT = 3000;
 const DIST = path.join(__dirname, 'dist');
-const GHL_TOKEN = 'pit-424c60f8-0899-4fd5-9845-fde4945ff3f2';
+const GHL_TOKEN = process.env.GHL_TOKEN; // set GHL_TOKEN in your shell before running
+if (!GHL_TOKEN) {
+  console.error('Set the GHL_TOKEN environment variable (a GHL private integration token) first.');
+  process.exit(1);
+}
 const GHL_HOST = 'services.leadconnectorhq.com';
 
 const MIME = {

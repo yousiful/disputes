@@ -1,6 +1,12 @@
 const LOCATION_ID = 'q5L4ttbBMHNxieXIcTVJ';
 const PROXY_BASE = '/api/ghl';
 
+// The CRM lookup goes through server.cjs, which only runs locally. On the public
+// site there is no proxy, so the lookup and its checklist item stay hidden.
+export const GHL_ENABLED =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 export interface GHLContact {
   id: string;
   contactName: string;

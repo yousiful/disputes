@@ -1,6 +1,6 @@
 import { Sparkles, Building2, Shield, Clock, Users, ShieldAlert, MapPin, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { DisputeData, ReasonCode } from "../types/dispute";
-import { GHLData } from "../lib/ghl";
+import { GHLData, GHL_ENABLED } from "../lib/ghl";
 import { FileUploadZone } from "./FileUploadZone";
 import { GHLLookup } from "./GHLLookup";
 import { Button } from "./ui/button";
@@ -62,7 +62,9 @@ interface DisputeFormProps {
 }
 
 export const DisputeForm = ({ data, onDataChange, onGenerateAI, isGenerating }: DisputeFormProps) => {
-  const checklist = EVIDENCE_CHECKLIST[data.reasonCode] ?? [];
+  const checklist = (EVIDENCE_CHECKLIST[data.reasonCode] ?? []).filter(
+    (item) => GHL_ENABLED || item.key !== "ghl"
+  );
   const score = checklist.filter((item) => checkItem(item.key, data) === "ok").length;
   const total = checklist.length;
   const scoreColor = score === total ? "text-emerald-600" : score >= total * 0.6 ? "text-amber-600" : "text-red-600";
@@ -79,10 +81,10 @@ export const DisputeForm = ({ data, onDataChange, onGenerateAI, isGenerating }: 
           <span className="font-bold text-xs">DISPUTE COMMAND CENTER</span>
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-1">Dispute Evidence Builder</h2>
-        <p className="text-slate-600 text-xs">Media Traffics | KenjiAI</p>
+        <p className="text-slate-600 text-xs">Free from KenjiAI</p>
       </div>
 
-      <GHLLookup onDataLoaded={handleGHLData} />
+      {GHL_ENABLED && <GHLLookup onDataLoaded={handleGHLData} />}
 
       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
         <div className="flex items-center justify-between mb-2">

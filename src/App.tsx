@@ -138,7 +138,12 @@ CRM Record: GoHighLevel confirms contact created ${new Date(disputeData.ghlData.
               <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-2 text-[10px] md:text-xs lg:text-sm text-slate-600">
                   <CheckCircle className="w-3 h-3 md:w-4 md:h-4 text-emerald-500" />
-                  <span>94% Win Rate</span>
+                  <a
+                    href="https://kenjiai.com/free-tools"
+                    className="text-cyan-600 hover:text-cyan-700 font-semibold underline decoration-cyan-600/30"
+                  >
+                    More free tools
+                  </a>
                   <span className="text-slate-300">•</span>
                   <span>Made with ❤️ by{' '}
                     <a

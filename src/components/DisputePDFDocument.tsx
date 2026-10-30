@@ -274,13 +274,13 @@ export const DisputePDFDocument = ({ data }: DisputePDFDocumentProps) => (
       </Text>
 
       <Text style={styles.declaration}>
-        This document constitutes a formal legal response. All information provided is true and accurate.{'\n'}
-        Verified by Media Traffics | KenjiAI - Professional Dispute Management System
+        This document constitutes the merchant's formal response. All information provided is true and accurate.{'\n'}
+        Submitted by {data.merchantName || 'the merchant'}
       </Text>
 
       <View style={styles.footer}>
         <Text>Generated on {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</Text>
-        <Text>Media Traffics | KenjiAI © 2024 - All Rights Reserved</Text>
+        <Text>Prepared with the KenjiAI Chargeback Response Builder</Text>
       </View>
     </Page>
   </Document>
